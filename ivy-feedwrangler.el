@@ -2,7 +2,7 @@
 ;; -*- lexical-binding: t; -*-
 
 ;; Adam Simpson <adam@adamsimpson.net>
-;; Version: 0.1.0
+;; Version: 0.1.1
 ;; Package-Requires: (ivy)
 ;; Keywords: rss, curl, ivy
 ;; URL: https://github.com/asimpson/dotfiles/
