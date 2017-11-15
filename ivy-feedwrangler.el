@@ -2,10 +2,10 @@
 ;; -*- lexical-binding: t; -*-
 
 ;; Adam Simpson <adam@adamsimpson.net>
-;; Version: 0.1.1
-;; Package-Requires: (ivy)
-;; Keywords: rss, curl, ivy
-;; URL: https://github.com/asimpson/dotfiles/
+;; Version: 0.2.2
+;; Package-Requires: ((ivy "9.0"))
+;; Keywords: rss, url, ivy
+;; URL: https://github.com/asimpson/ivy-feedwrangler
 
 ;;; Commentary:
 ;; This package requires that you manually retrieve your access token by using the curl command on this page: https://feedwrangler.net/developers/users
@@ -18,78 +18,76 @@
 
 (defvar ivy-feedwrangler--base-url
   "https://feedwrangler.net/api/v2/feed_items/"
-  "The base URL for the API."
-)
+  "The base URL for the API.")
+
+(defvar ivy-feedwrangler--current-link
+  nil
+  "The href to the post in ‘ivy-feedwrangler--post-buffer’.")
 
 (defvar ivy-feedwrangler--post-buffer
   "feedwrangler-body"
-  "The buffer to read posts."
-)
+  "The buffer to read posts.")
 
 (defun ivy-feedwrangler--parse-feed(feed)
   "Returns feed items in format: 'Site Title - Post title' format."
   (mapcar (lambda (x)
-    (cons (format "%s - %s" (alist-get 'feed_name x) (alist-get 'title x))
-      (list :url (alist-get 'url x) :id (alist-get 'feed_item_id x) :body (alist-get 'body x)))) feed))
-
+            (cons (format "%s - %s" (alist-get 'feed_name x) (alist-get 'title x))
+                  (list :url (alist-get 'url x) :id (alist-get 'feed_item_id x) :body (alist-get 'body x)))) feed))
 
 (defun ivy-feedwrangler--get-token()
   "Returns the feedrwrangler token from auth-source."
-  (let (token entry)
-    (setq entry (auth-source-search :host "feedwrangler.net" :max 1))
-    (setq token (funcall (plist-get (car entry) :secret)))))
+  (let ((entry (auth-source-search :host "feedwrangler.net" :max 1)))
+    (funcall (plist-get (car entry) :secret))))
+
+(defun ivy-feedwrangler--mark-read(&optional id mark-all)
+  (let (url (token (ivy-feedwrangler--get-token)))
+    (if (and (null mark-all) id)
+        (setq url (concat ivy-feedwrangler--base-url "update?access_token=" token "&feed_item_id=" id "&read=true"))
+      (setq url (concat ivy-feedwrangler--base-url "mark_all_read?access_token=" token)))
+    (url-retrieve-synchronously url t)))
 
 (defun ivy-feedwrangler--get-feed()
   "Make http request for feed items and parse JSON response"
-  (let ((token (ivy-feedwrangler--get-token)) url)
-    (setq url (concat ivy-feedwrangler--base-url "list?access_token=" token "&read=false"))
-    (with-temp-buffer
-      (unless (zerop (call-process "curl" nil t nil "-s" url))
-        (error "Failed: 'curl -s %s'" url))
-      (let* ((json nil)
-            (ret (ignore-errors
-                    (setq json (json-read-from-string
-                                (buffer-substring-no-properties (point-min) (point-max))))
-                    t)))
-        (unless ret
-          (error "Error: Can't get JSON response"))
-        json))))
+  (let* ((token (ivy-feedwrangler--get-token))
+         (url (concat ivy-feedwrangler--base-url "list?access_token=" token "&read=false"))
+         (buf (url-retrieve-synchronously url t)))
+    (json-read-from-string (with-current-buffer buf
+                             (buffer-substring-no-properties
+                              (marker-position url-http-end-of-headers)
+                              (point-max))))))
 
+;;;###autoload
 (defun ivy-feedwrangler()
   "Get latest items from feedwrangler."
   (interactive)
   (message "Loading feed...")
   (let (feed)
     (setq feed (ivy-feedwrangler--parse-feed (alist-get 'feed_items (ivy-feedwrangler--get-feed))))
-    (if (equal (length feed) 0)
+    (if (null feed)
         (message "No new unread items")
       (ivy-read "Unread items: "
-        feed
-        :action (lambda (item)
-          (let ((url (plist-get (cdr item) :url)))
-          (if (memq system-type '(darwin))
-            (start-process (concat "ivy-feedwrangler-" url) nil "open" url "-g")
-          (browse-url url)))))
-  )))
+                feed
+                :action (lambda (item)
+                          (let ((url (plist-get (cdr item) :url)))
+                            (if (memq system-type '(darwin))
+                                (start-process (concat "ivy-feedwrangler-" url) nil "open" url "-g")
+                              (browse-url url))))))))
 
 (ivy-set-actions
-  'ivy-feedwrangler
-  '(("x" (lambda (item)
-    (let ((token (ivy-feedwrangler--get-token)) url id)
-      (setq id (number-to-string (plist-get (cdr item) :id)))
-      (setq url (concat ivy-feedwrangler--base-url "update?access_token=" token "&feed_item_id=" id "&read=true"))
-      (with-temp-buffer (call-process "curl" nil t nil "-s" url)))) "Mark as Read")
-    ("X" (lambda (item)
-        (let ((token (ivy-feedwrangler--get-token)) url)
-          (setq url (concat ivy-feedwrangler--base-url "mark_all_read?access_token=" token))
-          (with-temp-buffer (call-process "curl" nil t nil "-s" url)))) "Mark all as Read")
-    ("p" (lambda (item)
-        (let ( (body (plist-get (cdr item) :body)) )
-          (when (get-buffer ivy-feedwrangler--post-buffer) (kill-buffer ivy-feedwrangler--post-buffer))
-          (with-current-buffer (get-buffer-create ivy-feedwrangler--post-buffer)
-            (insert body)
-            (shr-render-buffer ivy-feedwrangler--post-buffer)))) "View Post")
-))
+ 'ivy-feedwrangler
+ '(("x" (lambda (item)
+          (let ((id (number-to-string (plist-get (cdr item) :id))))
+            (ivy-feedwrangler--mark-read id nil)) "Mark as Read"))
+   ("X" (lambda (item)
+          (ivy-feedwrangler--mark-read nil t)) "Mark as Read")
+   ("p" (lambda (item)
+          (let ( (body (plist-get (cdr item) :body))
+                 (url (plist-get (cdr item) :url)))
+            (when (get-buffer ivy-feedwrangler--post-buffer) (kill-buffer ivy-feedwrangler--post-buffer))
+            (setq ivy-feedwrangler--current-link url)
+            (with-current-buffer (get-buffer-create ivy-feedwrangler--post-buffer)
+              (insert body)
+              (shr-render-buffer ivy-feedwrangler--post-buffer)))) "View Post")))
 
 (provide 'ivy-feedwrangler)
 
