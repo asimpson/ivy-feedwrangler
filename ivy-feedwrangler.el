@@ -3,8 +3,8 @@
 
 ;; Adam Simpson <adam@adamsimpson.net>
 ;; Version: 0.2.2
-;; Package-Requires: ((ivy "9.0"))
-;; Keywords: rss, url, ivy
+;; Package-Requires: ((emacs "25") (ivy "0.9") (let-alist "1.0.5"))
+;; Keywords: news, rss, url, ivy
 ;; URL: https://github.com/asimpson/ivy-feedwrangler
 
 ;;; Commentary:
@@ -15,6 +15,10 @@
 ;; password: token
 
 ;;; Code:
+
+(require 'ivy)
+(require 'json)
+
 
 (defvar ivy-feedwrangler--base-url
   "https://feedwrangler.net/api/v2/feed_items/"
@@ -29,13 +33,15 @@
   "The buffer to read posts.")
 
 (defun ivy-feedwrangler--parse-feed(feed)
-  "Returns feed items in format: 'Site Title - Post title' format."
+  "Return FEED items in format: 'Site Title - Post title' format."
   (mapcar (lambda (x)
-            (cons (format "%s - %s" (alist-get 'feed_name x) (alist-get 'title x))
-                  (list :url (alist-get 'url x) :id (alist-get 'feed_item_id x) :body (alist-get 'body x)))) feed))
+            (let-alist x
+              (cons (format "%s - %s" .feed_name  .title)
+                    (list :url .url :id .feed_item_id :body .body))))
+          feed))
 
 (defun ivy-feedwrangler--get-token()
-  "Returns the feedrwrangler token from auth-source."
+  "Return the feedrwrangler token from auth-source."
   (let ((entry (auth-source-search :host "feedwrangler.net" :max 1)))
     (funcall (plist-get (car entry) :secret))))
 
@@ -47,7 +53,7 @@
     (url-retrieve-synchronously url t)))
 
 (defun ivy-feedwrangler--get-feed()
-  "Make http request for feed items and parse JSON response"
+  "Make http request for feed items and parse JSON response."
   (let* ((token (ivy-feedwrangler--get-token))
          (url (concat ivy-feedwrangler--base-url "list?access_token=" token "&read=false"))
          (buf (url-retrieve-synchronously url t)))
@@ -61,8 +67,7 @@
   "Get latest items from feedwrangler."
   (interactive)
   (message "Loading feed...")
-  (let (feed)
-    (setq feed (ivy-feedwrangler--parse-feed (alist-get 'feed_items (ivy-feedwrangler--get-feed))))
+  (let ((feed (ivy-feedwrangler--parse-feed (alist-get 'feed_items (ivy-feedwrangler--get-feed)))))
     (if (null feed)
         (message "No new unread items")
       (ivy-read "Unread items: "
