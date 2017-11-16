@@ -40,6 +40,8 @@
     (funcall (plist-get (car entry) :secret))))
 
 (defun ivy-feedwrangler--mark-read(&optional id mark-all)
+  "Marks a single item as read if passed an optional ID.
+With optional mark-all mark all unread items as read."
   (let (url (token (ivy-feedwrangler--get-token)))
     (if (and (null mark-all) id)
         (setq url (concat ivy-feedwrangler--base-url "update?access_token=" token "&feed_item_id=" id "&read=true"))
@@ -77,9 +79,9 @@
  'ivy-feedwrangler
  '(("x" (lambda (item)
           (let ((id (number-to-string (plist-get (cdr item) :id))))
-            (ivy-feedwrangler--mark-read id nil)) "Mark as Read"))
+            (ivy-feedwrangler--mark-read id nil))) "Mark item as read")
    ("X" (lambda (item)
-          (ivy-feedwrangler--mark-read nil t)) "Mark as Read")
+          (ivy-feedwrangler--mark-read nil t)) "Mark all as read")
    ("p" (lambda (item)
           (let ( (body (plist-get (cdr item) :body))
                  (url (plist-get (cdr item) :url)))
@@ -87,7 +89,7 @@
             (setq ivy-feedwrangler--current-link url)
             (with-current-buffer (get-buffer-create ivy-feedwrangler--post-buffer)
               (insert body)
-              (shr-render-buffer ivy-feedwrangler--post-buffer)))) "View Post")))
+              (shr-render-buffer ivy-feedwrangler--post-buffer)))) "View post")))
 
 (provide 'ivy-feedwrangler)
 
