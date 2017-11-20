@@ -2,7 +2,7 @@
 ;; -*- lexical-binding: t; -*-
 
 ;; Adam Simpson <adam@adamsimpson.net>
-;; Version: 0.2.3
+;; Version: 0.2.4
 ;; Package-Requires: ((ivy "9.0"))
 ;; Keywords: rss, url, ivy
 ;; URL: https://github.com/asimpson/ivy-feedwrangler
@@ -15,6 +15,9 @@
 ;; password: token
 
 ;;; Code:
+(require 'ivy)
+(require 'url)
+(require 'shr)
 
 (defvar ivy-feedwrangler--base-url
   "https://feedwrangler.net/api/v2/feed_items/"
