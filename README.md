@@ -1,6 +1,7 @@
 # ivy-feedwrangler
 
 [![MELPA](https://melpa.org/packages/ivy-feedwrangler-badge.svg)](https://melpa.org/#/ivy-feedwrangler)
+[![MELPA Stable](https://stable.melpa.org/packages/ivy-feedwrangler-badge.svg)](https://stable.melpa.org/#/ivy-feedwrangler)
 
 An [Ivy](http://oremacs.com/swiper/) interface to the [Feedwrangler RSS](https://feedwrangler.net) service
 
