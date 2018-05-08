@@ -2,7 +2,7 @@
 ;; -*- lexical-binding: t; -*-
 
 ;; Adam Simpson <adam@adamsimpson.net>
-;; Version: 0.2.5
+;; Version: 0.2.6
 ;; Package-Requires: ((ivy "9.0"))
 ;; Keywords: rss, url, ivy
 ;; URL: https://github.com/asimpson/ivy-feedwrangler
@@ -34,7 +34,7 @@
 (defun ivy-feedwrangler--parse-feed(feed)
   "Returns feed items in format: 'Site Title - Post title' format."
   (mapcar (lambda (x)
-            (cons (string-trim (format "%s - %s" (alist-get 'feed_name x) (alist-get 'title x)))
+            (cons (string-trim (format "%s - %s" (alist-get 'feed_name x) (decode-coding-string (alist-get 'title x) 'utf-8)))
                   (list :url (alist-get 'url x) :id (alist-get 'feed_item_id x) :body (alist-get 'body x)))) feed))
 
 (defun ivy-feedwrangler--get-token()
@@ -56,10 +56,9 @@ With optional mark-all mark all unread items as read."
   (let* ((token (ivy-feedwrangler--get-token))
          (url (concat ivy-feedwrangler--base-url "list?access_token=" token "&read=false"))
          (buf (url-retrieve-synchronously url t)))
-    (json-read-from-string (with-current-buffer buf
-                             (buffer-substring-no-properties
-                              (marker-position url-http-end-of-headers)
-                              (point-max))))))
+    (json-read-from-string (with-current-buffer buf (buffer-substring-no-properties
+                                                     (marker-position url-http-end-of-headers)
+                                                     (point-max))))))
 
 ;;;###autoload
 (defun ivy-feedwrangler()
