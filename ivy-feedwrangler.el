@@ -2,8 +2,8 @@
 ;; -*- lexical-binding: t; -*-
 
 ;; Adam Simpson <adam@adamsimpson.net>
-;; Version: 0.2.6
-;; Package-Requires: ((ivy "9.0"))
+;; Version: 0.3.0
+;; Package-Requires: (ivy "9.0"))
 ;; Keywords: rss, url, ivy
 ;; URL: https://github.com/asimpson/ivy-feedwrangler
 
