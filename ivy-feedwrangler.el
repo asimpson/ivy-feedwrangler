@@ -2,7 +2,7 @@
 ;; -*- lexical-binding: t; -*-
 
 ;; Adam Simpson <adam@adamsimpson.net>
-;; Version: 0.3.0
+;; Version: 0.3.1
 ;; Package-Requires: (ivy "9.0"))
 ;; Keywords: rss, url, ivy
 ;; URL: https://github.com/asimpson/ivy-feedwrangler
@@ -38,7 +38,7 @@
                   (list :url (alist-get 'url x)
                         :title (alist-get 'title x)
                         :id (alist-get 'feed_item_id x)
-                        :body (alist-get 'body x)))) feed))
+                        :body (decode-coding-string (alist-get 'body x) 'utf-8)))) feed))
 
 (defun ivy-feedwrangler--get-token()
   "Returns the feedrwrangler token from auth-source."
