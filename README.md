@@ -33,6 +33,20 @@ Pressing enter on a post opens the default browser. There are a couple additiona
 |---|---|
 | `x` | Mark selected post as read |
 | `X` | Mark all posts as read |
+| `r` | Save as unread in pinboard |
 | `p` | View [post body in a buffer](https://asimpson.github.io/ivy-feedwrangler/images/post-view.png) |
 
 Note: that these commands should work in the default ivy interface as well as in a `ivy-occur` buffer.
+
+### Add item to pinboard.in
+To be able to save the selected item to [pinboard.in](https://pinboard.in) add another entry to `authinfo` for pinboard like so:
+
+| Field | Value |
+|---|---|
+| `machine` | pinboard.in |
+| `login` | pinboard username |
+| `password` | pinboard API token from [here](https://pinboard.in/settings/password). |
+
+This entry will look like:
+
+`machine pinboard.in login username password username:API_TOKEN`.
