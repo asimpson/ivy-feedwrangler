@@ -2,7 +2,7 @@
 ;; -*- lexical-binding: t; -*-
 
 ;; Adam Simpson <adam@adamsimpson.net>
-;; Version: 0.4.0
+;; Version: 0.4.1
 ;; Package-Requires: (ivy "9.0"))
 ;; Keywords: rss, url, ivy
 ;; URL: https://github.com/asimpson/ivy-feedwrangler
@@ -40,7 +40,7 @@
   `(with-current-buffer ,buffer (json-read-from-string (buffer-substring-no-properties url-http-end-of-headers (point-max)))))
 
 (defun ivy-feedwrangler--parse-feed(feed)
-  "Returns feed items in format: 'Site Title - Post title' format."
+  "Return FEED items in format: 'Site Title - Post title' format."
   (mapcar (lambda (x)
             (cons (string-trim (format "%s - %s" (alist-get 'feed_name x) (decode-coding-string (alist-get 'title x) 'utf-8)))
                   (list :url (alist-get 'url x)
@@ -49,13 +49,13 @@
                         :body (decode-coding-string (alist-get 'body x) 'utf-8)))) feed))
 
 (defun ivy-feedwrangler--get-token()
-  "Returns the feedrwrangler token from auth-source."
+  "Return the feedrwrangler token from auth-source."
   (let ((entry (auth-source-search :host "feedwrangler.net" :max 1)))
     (funcall (plist-get (car entry) :secret))))
 
 (defun ivy-feedwrangler--mark-read(&optional id mark-all)
-  "Marks a single item as read if passed an optional ID.
-With optional mark-all mark all unread items as read."
+  "Mark a single item as read if passed an optional ID.
+With optional MARK-ALL mark all unread items as read."
   (let (url (token (ivy-feedwrangler--get-token)))
     (if (and (null mark-all) id)
         (setq url (concat ivy-feedwrangler--base-url "feed_items/update?access_token=" token "&feed_item_id=" id "&read=true"))
@@ -63,14 +63,14 @@ With optional mark-all mark all unread items as read."
     (url-retrieve-synchronously url t)))
 
 (defun ivy-feedwrangler--get-feed()
-  "Make http request for feed items and parse JSON response"
+  "Make http request for feed items and parse JSON response."
   (let* ((token (ivy-feedwrangler--get-token))
          (url (concat ivy-feedwrangler--base-url "feed_items/list?access_token=" token "&read=false"))
          (buf (url-retrieve-synchronously url t)))
     (json-parse! buf)))
 
 (defun ivy-feedwrangler--fetch-pinboard-token()
-  "Returns the pinboard API token from auth-source."
+  "Return the pinboard API token from auth-source."
   (let ((entry (auth-source-search :host "pinboard.in" :max 1)))
     (funcall (plist-get (car entry) :secret))))
 
