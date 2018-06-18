@@ -2,7 +2,7 @@
 ;; -*- lexical-binding: t; -*-
 
 ;; Adam Simpson <adam@adamsimpson.net>
-;; Version: 0.4.1
+;; Version: 0.4.2
 ;; Package-Requires: (ivy "9.0"))
 ;; Keywords: rss, url, ivy
 ;; URL: https://github.com/asimpson/ivy-feedwrangler
@@ -73,6 +73,9 @@ With optional MARK-ALL mark all unread items as read."
   "Return the pinboard API token from auth-source."
   (let ((entry (auth-source-search :host "pinboard.in" :max 1)))
     (funcall (plist-get (car entry) :secret))))
+
+(defun ivy-feedwrangler--build-feed(feed)
+  (list (alist-get 'title feed) :title (alist-get 'title feed) :id (number-to-string (alist-get 'feed_id feed))))
 
 ;;;###autoload
 (defun ivy-feedwrangler--cancel()
