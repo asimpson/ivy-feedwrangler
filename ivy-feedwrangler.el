@@ -39,14 +39,31 @@
   "Parse and return JSON from BUFFER.  Ideally for the 'url-retrieve' family of funcs."
   `(with-current-buffer ,buffer (json-read-from-string (buffer-substring-no-properties url-http-end-of-headers (point-max)))))
 
+(defun shr-render-buffer-to-string (string)
+  "Return the HTML STRING as a plain text string."
+  (interactive)
+  (or (fboundp 'libxml-parse-html-region)
+      (error "This function requires Emacs to be compiled with libxml2"))
+  (let (point)
+    (with-temp-buffer
+        (insert string)
+      (setq point (point-max-marker))
+      (shr-insert-document
+       (libxml-parse-html-region (point-min) (point-max)))
+      (delete-region (point-min) point)
+      (string-trim (buffer-substring-no-properties (point-min) (point-max))))))
+
 (defun ivy-feedwrangler--parse-feed(feed)
   "Return FEED items in format: 'Site Title - Post title' format."
   (mapcar (lambda (x)
-            (cons (string-trim (format "%s - %s" (alist-get 'feed_name x) (decode-coding-string (alist-get 'title x) 'utf-8)))
-                  (list :url (alist-get 'url x)
-                        :title (decode-coding-string  (alist-get 'title x) 'utf-8)
-                        :id (alist-get 'feed_item_id x)
-                        :body (decode-coding-string (alist-get 'body x) 'utf-8)))) feed))
+            (let ((title (decode-coding-string  (alist-get 'title x) 'utf-8)))
+              (if (string-equal "[Untitled]" (decode-coding-string  (alist-get 'title x) 'utf-8))
+                  (setq title (shr-render-buffer-to-string (decode-coding-string (alist-get 'body x) 'utf-8))))
+              (cons (string-trim (format "%s - %s" (alist-get 'feed_name x) title))
+                    (list :url (alist-get 'url x)
+                          :title (decode-coding-string  (alist-get 'title x) 'utf-8)
+                          :id (alist-get 'feed_item_id x)
+                          :body (decode-coding-string (alist-get 'body x) 'utf-8))))) feed))
 
 (defun ivy-feedwrangler--get-token()
   "Return the feedrwrangler token from auth-source."
