@@ -92,7 +92,6 @@ With optional MARK-ALL mark all unread items as read."
 (defun ivy-feedwrangler()
   "Get latest items from feedwrangler."
   (interactive)
-  (message "Loading feed...")
   (let (feed)
     (setq feed (ivy-feedwrangler--parse-feed (alist-get 'feed_items (ivy-feedwrangler--get-feed))))
     (if (null feed)
@@ -120,6 +119,10 @@ With optional MARK-ALL mark all unread items as read."
                                               "&description="
                                               (plist-get (cdr item) :title)
                                               "&toread=yes"))) "Save as unread in pinboard")
+   ("m" (lambda (item)
+          (start-process "mpv" nil "mpv" (plist-get (cdr item) :url))) "View in mpv")
+   ("q" (lambda (item)
+          (start-process "qutebrowser" nil "qutebrowser" (plist-get (cdr item) :url))) "Open in qutebrowser")
    ("p" (lambda (item)
           (let ( (body (plist-get (cdr item) :body))
                  (url (plist-get (cdr item) :url)))
